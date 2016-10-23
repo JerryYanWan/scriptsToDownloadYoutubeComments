@@ -1,3 +1,4 @@
+# encoding=utf8
 #!/usr/bin/python
 
 # Usage example:
@@ -6,7 +7,10 @@
 
 import httplib2
 import os
-import sys
+import sys, csv
+reload(sys)  
+sys.setdefaultencoding('utf8')
+from collections import defaultdict
 
 from apiclient.discovery import build_from_document
 from apiclient.errors import HttpError
@@ -70,22 +74,36 @@ def get_authenticated_service(args):
 
 # Call the API's commentThreads.list method to list the existing comment threads.
 def get_comment_threads(youtube, video_id, maxResultsLimit):
+  all_comments_table = defaultdict(list)
+  comments_followers = defaultdict(int)
   results = youtube.commentThreads().list(
     part="snippet",
     videoId=video_id,
     textFormat="plainText",
     maxResults=maxResultsLimit
   ).execute()
+  print "retrieve page 1 .."
   for item in results["items"]:
     comment = item["snippet"]["topLevelComment"]
     author = comment["snippet"]["authorDisplayName"]
     text = comment["snippet"]["textDisplay"]
-    print "Page1: Comment by %s: %s" % (author, text)
+    datetime = comment["snippet"]["publishedAt"]
+    likeCount = comment["snippet"]["likeCount"]
+    all_comments_table[item["id"]] = [datetime, author, str(likeCount), text]
+    #print "Page1|%s|%s|%s|%s" % (datetime, author, likeCount, text)
+    try:
+      parentId = comment["snippet"]["parentId"]
+      if comments_followers.has_key(parentId):
+          comments_followers[parentId] += 1
+      print "parentId %s" % parentId
+    except:
+      pass
   nextPageToken = results["nextPageToken"]
   pageId = 1
   try:
     while (True):
       pageId += 1
+      print "retrieve page %s .." % pageId
       results = youtube.commentThreads().list(
         part="snippet",
         videoId=video_id,
@@ -97,10 +115,21 @@ def get_comment_threads(youtube, video_id, maxResultsLimit):
         comment = item["snippet"]["topLevelComment"]
         author = comment["snippet"]["authorDisplayName"]
         text = comment["snippet"]["textDisplay"]
-        print "Page%s: Comment by %s: %s" % (pageId, author, text)
+        datetime = comment["snippet"]["publishedAt"]
+        likeCount = comment["snippet"]["likeCount"]
+        all_comments_table[item["id"]] = [datetime, author, str(likeCount), text]
+        #print "Page%s|%s|%s|%s|%s" % (pageId, datetime, author, likeCount, text)
+        try:
+          parentId = comment["snippet"]["parentId"]
+          if comments_followers.has_key(parentId):
+            comments_followers[parentId] += 1
+          print "parentId %s" % parentId
+        except:
+          pass
       nextPageToken = results["nextPageToken"]
   except:
     pass
+  return (all_comments_table, comments_followers)
 
 
 # Call the API's comments.list method to list the existing comment replies.
@@ -187,6 +216,8 @@ if __name__ == "__main__":
     help="Required; ID for video for which the comment will be inserted.")
   argparser.add_argument("--maxResults", default=20,
     help="Set maxResults for each retrieving page.")
+  argparser.add_argument("--save", default="reviews.csv",
+    help="Save file to the csv.")
   # The "text" option specifies the text that will be used as comment.
 
   #argparser.add_argument("--text", help="Required; text that will be used as comment.")
@@ -200,7 +231,13 @@ if __name__ == "__main__":
   youtube = get_authenticated_service(args)
   # All the available methods are used in sequence just for the sake of an example.
   try:
-    get_comment_threads(youtube, args.videoid, (int) (args.maxResults))
+    (all_comments_table, comments_followers) = get_comment_threads(youtube, args.videoid, (int) (args.maxResults))
+    with open(args.save, "w") as fw:
+      wr = csv.writer(fw)
+      for key in all_comments_table.keys():
+        listInfo = all_comments_table[key]
+        listInfo.append(str(comments_followers[key]))
+        wr.writerow([x.encode('utf-8') for x in listInfo])
     #video_comment_threads = get_comment_threads(youtube, args.videoid)
     #parent_id = video_comment_threads[i]["id"]
     #insert_comment(youtube, parent_id, args.text)
