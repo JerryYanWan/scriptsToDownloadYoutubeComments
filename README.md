@@ -1,23 +1,26 @@
 Scripts to download comments from Youtube
 =========================================
 
-1. Lists of Files:
-------------------
-.
-├── README.md
-├── client_secrets.json
-├── comments.py
-├── comments.py-oauth2.json
-└── youtube-v3-discoverydocument.json
-
-2. File Explanation
+1. File Explanation
 -------------------
 
-  # README.md: 
+  * README.md: 
     this document
-  # client_secrets.json
+  * client_secrets.json
     OAuth credentials created from Google API Console
-  # youtube-v3-discoverydocument.json
+  * youtube-v3-discoverydocument.json
     other authentication file
-  # comments.py
+  * comments.py
     main script to download comments
+
+2. How to run the code
+----------------------
+
+  *  install Google-api for your computer
+   ```
+    pip install --upgrade google-api-python-client
+   ```
+  * run (for example)
+   ```
+    python comments.py --videoid='m43UyujVsXk' --maxResults 20
+   ```
