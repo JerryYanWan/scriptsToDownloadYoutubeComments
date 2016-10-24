@@ -8,8 +8,7 @@
 import httplib2
 import os
 import sys, csv
-reload(sys)  
-sys.setdefaultencoding('utf8')
+import codecs
 from collections import defaultdict
 
 from apiclient.discovery import build_from_document
@@ -233,11 +232,13 @@ if __name__ == "__main__":
   try:
     (all_comments_table, comments_followers) = get_comment_threads(youtube, args.videoid, (int) (args.maxResults))
     with open(args.save, "w") as fw:
+      fw.write(codecs.BOM_UTF8)
       wr = csv.writer(fw)
       for key in all_comments_table.keys():
         listInfo = all_comments_table[key]
-        listInfo.append(str(comments_followers[key]))
-        wr.writerow([x.encode('utf-8') for x in listInfo])
+        #listInfo.append(str(comments_followers[key]))
+        wr.writerow(listInfo)
+        #wr.writerow([x for x in listInfo])
     #video_comment_threads = get_comment_threads(youtube, args.videoid)
     #parent_id = video_comment_threads[i]["id"]
     #insert_comment(youtube, parent_id, args.text)
