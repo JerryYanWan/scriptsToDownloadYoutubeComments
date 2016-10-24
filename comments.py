@@ -1,4 +1,4 @@
-# encoding=utf8
+# coding=utf8
 #!/usr/bin/python
 
 # Usage example:
@@ -237,8 +237,8 @@ if __name__ == "__main__":
       for key in all_comments_table.keys():
         listInfo = all_comments_table[key]
         #listInfo.append(str(comments_followers[key]))
-        wr.writerow(listInfo)
-        #wr.writerow([x for x in listInfo])
+        wr.writerow([x.encode('utf-8') for x in listInfo])
+        #wr.writerow(listInfo)
     #video_comment_threads = get_comment_threads(youtube, args.videoid)
     #parent_id = video_comment_threads[i]["id"]
     #insert_comment(youtube, parent_id, args.text)
